@@ -1,45 +1,86 @@
 import styles from "./Form.module.css";
 
+import axios from "axios";
+import apiBaseUrl from "../api";
+
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+
+import useApi from "../Hooks/useApi";
+
 const LoginForm = () => {
-  const handleSubmit = (e) => {
-    //Nesse handlesubmit você deverá usar o preventDefault,
-    //enviar os dados do formulário e enviá-los no corpo da requisição 
-    //para a rota da api que faz o login /auth
-    //lembre-se que essa rota vai retornar um Bearer Token e o mesmo deve ser salvo
-    //no localstorage para ser usado em chamadas futuras
-    //Com tudo ocorrendo corretamente, o usuário deve ser redirecionado a página principal,com react-router
-    //Lembre-se de usar um alerta para dizer se foi bem sucedido ou ocorreu um erro
+
+  /// Estado dos campos de input do formulário
+  const [login, setLogin] = useState(
+    {
+      username: "",
+      password: ""
+    }
+  );
+
+  const { data, isLoading, error, shouldFetch } = useApi();
+
+  /// Hook utilizado para fazer a navegação entre rotas
+  const navigate = useNavigate();
+
+  useEffect(() => {
+
+    if (data && !error) {
+
+      /// Guardamos o token JWT no Storage
+      localStorage.setItem("tokenJwt", data.token);
+
+      /// Redirecionamos o usuário para a Home
+      navigate("/home");
+
+    }
+
+
+  }, [data, error, navigate]);
+
+  const handleSubmit = async (e) => {
+
+    e.preventDefault();
+
+    await shouldFetch("auth", login);
+
   };
 
   return (
-    <>
-      {/* //Na linha seguinte deverá ser feito um teste se a aplicação
-        // está em dark mode e deverá utilizar o css correto */}
-      <div
-        className={`text-center card container ${styles.card}`}
-      >
-        <div className={`card-body ${styles.CardBody}`}>
-          <form onSubmit={handleSubmit}>
-            <input
-              className={`form-control ${styles.inputSpacing}`}
-              placeholder="Login"
-              name="login"
-              required
-            />
-            <input
-              className={`form-control ${styles.inputSpacing}`}
-              placeholder="Password"
-              name="password"
-              type="password"
-              required
-            />
-            <button className="btn btn-primary" type="submit">
-              Send
-            </button>
-          </form>
-        </div>
+    <div
+      className={`text-center card container card`}
+    >
+      <div className={`card-body ${styles.CardBody}`}>
+        <form onSubmit={handleSubmit}>
+          <input
+            className={`form-control ${styles.inputSpacing}`}
+            placeholder="Login"
+            name="login"
+            value={login.username}
+            onChange={(e) => setLogin({ ...login, username: e.target.value })}
+            required
+          />
+          <input
+            className={`form-control ${styles.inputSpacing}`}
+            placeholder="Password"
+            name="password"
+            value={login.password}
+            onChange={(e) => setLogin({ ...login, password: e.target.value })}
+
+            type="password"
+            required
+          />
+
+          <p> {isLoading ? "Carregando..." : ""}</p>
+
+          <p> {error ? error.message : ""}</p>
+
+          <button className="btn btn-primary" type="submit">
+            Send
+          </button>
+        </form>
       </div>
-    </>
+    </div>
   );
 };
 
