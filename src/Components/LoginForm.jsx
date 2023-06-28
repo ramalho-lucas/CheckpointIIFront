@@ -1,86 +1,101 @@
 import styles from "./Form.module.css";
-
-import axios from "axios";
-import apiBaseUrl from "../api";
-
+import { useContext } from "react";
+import { AuthContext } from "../contexts/auth-context";
+import api from "../api";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-
-import useApi from "../Hooks/useApi";
+import { ThemeContext } from "../contexts/theme-context";
+import { Snackbar, Alert } from "@mui/material";
 
 const LoginForm = () => {
+  const { saveEmail, saveToken, setEstadoLogin } = useContext(AuthContext);
+  const { theme } = useContext(ThemeContext);
 
-  /// Estado dos campos de input do formulário
-  const [login, setLogin] = useState(
-    {
-      username: "",
-      password: ""
-    }
-  );
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [open, setOpen] = useState(false);
 
-  const { data, isLoading, error, shouldFetch } = useApi();
-
-  /// Hook utilizado para fazer a navegação entre rotas
   const navigate = useNavigate();
 
-  useEffect(() => {
-
-    if (data && !error) {
-
-      /// Guardamos o token JWT no Storage
-      localStorage.setItem("tokenJwt", data.token);
-
-      /// Redirecionamos o usuário para a Home
-      navigate("/home");
-
-    }
-
-
-  }, [data, error, navigate]);
-
-  const handleSubmit = async (e) => {
-
-    e.preventDefault();
-
-    await shouldFetch("auth", login);
-
+  const handleClick = () => {
+    setOpen(true);
   };
 
+  const handleClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setOpen(false);
+  };
+
+  async function logar() {
+    try {
+      const response = await api.post("/auth", {
+        username: email,
+        password: password,
+      });
+      console.log(response.data);
+      saveEmail(email);
+      saveToken(response.data.token);
+      setEstadoLogin("Logout");
+      navigate("/");
+    } catch (error) {
+      setOpen(true)
+    }
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    logar();
+  };
   return (
-    <div
-      className={`text-center card container card`}
-    >
-      <div className={`card-body ${styles.CardBody}`}>
-        <form onSubmit={handleSubmit}>
-          <input
-            className={`form-control ${styles.inputSpacing}`}
-            placeholder="Login"
-            name="login"
-            value={login.username}
-            onChange={(e) => setLogin({ ...login, username: e.target.value })}
-            required
-          />
-          <input
-            className={`form-control ${styles.inputSpacing}`}
-            placeholder="Password"
-            name="password"
-            value={login.password}
-            onChange={(e) => setLogin({ ...login, password: e.target.value })}
-
-            type="password"
-            required
-          />
-
-          <p> {isLoading ? "Carregando..." : ""}</p>
-
-          <p> {error ? error.message : ""}</p>
-
-          <button className="btn btn-primary" type="submit">
-            Send
-          </button>
-        </form>
+    <>
+      <Snackbar
+        open={open}
+        autoHideDuration={6000}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleClose}
+          severity="error"
+          sx={{ width: "100%" }}
+        >
+          Usuário ou senha incorretos, verifique.
+        </Alert>
+      </Snackbar>
+      <div
+        className={`text-center ${
+          theme == "dark" ? "dark" : ""
+        } card container ${styles.card}`}
+      >
+        <div className={`card-body ${styles.CardBody}`}>
+          <form onSubmit={handleSubmit}>
+            <input
+              className={`form-control ${styles.inputSpacing}`}
+              placeholder="Login"
+              name="login"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+            <input
+              className={`form-control ${styles.inputSpacing}`}
+              placeholder="Password"
+              name="password"
+              type="password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+            <button className="btn btn-primary" type="submit">
+              Send
+            </button>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
