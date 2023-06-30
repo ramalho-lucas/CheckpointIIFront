@@ -2,27 +2,34 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.min.js";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import ThemeProvider from "./contexts/theme-context";
+import AuthProvider from "./contexts/auth-context";
+import { RouterProvider, createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import Home from "./Routes/Home";
 import Login from "./Routes/Login";
 import Detail from "./Routes/Detail";
 import "./index.css";
 
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <App/>,
+    children:[
+      {path : "/", element: <Home/>},
+      {path : "/login", element: <Login/>},
+      {path : "/detail/:matricula", element: <Detail/>},
+    ],
+  },
+])
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 //Lembre-se de configurar suas rotas e seu contexto aqui
 root.render(
-<BrowserRouter>
-
-<Routes>
-  <Route path="/" element={<App />}>
-    <Route path="/" element={<Navigate to={"/home"} />} />
-    <Route path="/home" element={<Home />} />
-    <Route path="/login" element={<Login />} />
-    <Route path="/dentist/:id" element={<Detail />} />
-  </Route>
-</Routes>
-
-</BrowserRouter>
+  <AuthProvider>
+  <ThemeProvider >
+    <RouterProvider router={router}/>
+  </ThemeProvider>
+</AuthProvider>
 
 );
